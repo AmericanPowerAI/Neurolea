@@ -3908,7 +3908,7 @@ class ScientificComputingSpecializer:
         # Find equations (simplified patterns)
         equation_patterns = [
             r'([a-zA-Z]\w*)\s*=\s*([^,.\n]+)',  # Variable assignments
-            r'\$([^$]+)\
+            r'\$([^$]+)\$'
 ,  # LaTeX inline math
             r'\\begin\{equation\}(.*?)\\end\{equation\}',  # LaTeX equations
         ]
