@@ -1,4 +1,4 @@
-markdown# 🧠 Neurolea - Ultimate AI Framework
+🧠 Neurolea - Ultimate AI Framework
 
 > **Your personal AI framework with ZERO dependencies**
 
