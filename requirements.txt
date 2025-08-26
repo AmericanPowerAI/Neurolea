@@ -1,0 +1,16 @@
+# Neurolea - Zero Dependencies AI Framework
+# This file is intentionally empty!
+# 
+# Unlike other AI frameworks, Neurolea requires ZERO external dependencies.
+# No PyTorch, no NumPy, no Transformers library - just pure Python!
+# 
+# Your old requirements.txt probably looked like:
+# torch>=2.0.0          <- REPLACED by our AcceleratedTensor
+# transformers>=4.30.0  <- REPLACED by our UltimateLanguageModel  
+# tokenizers>=0.13.0    <- REPLACED by our SentencePieceTokenizer
+# numpy>=1.26.4         <- REPLACED by our pure Python math operations
+#
+# Now you just need:
+# python>=3.8
+#
+# That's it! 🎉
