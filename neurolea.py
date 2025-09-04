@@ -21,6 +21,13 @@ try:
         LayerNorm, Embedding, MultiHeadAttention, TransformerBlock,
         Sequential, GPTModel, SimpleTokenizer, Trainer
     )
+    # Try to import the hybrid accelerator
+    try:
+        from hybrid_accelerator import HybridAccelerator, HybridTensor
+        ACCELERATOR_AVAILABLE = True
+    except ImportError:
+        ACCELERATOR_AVAILABLE = False
+        print("⚠️ Hybrid accelerator not found, using pure Python")
 except ImportError:
     # If running as standalone, assume modules are in same directory
     import sys
@@ -31,6 +38,13 @@ except ImportError:
         LayerNorm, Embedding, MultiHeadAttention, TransformerBlock,
         Sequential, GPTModel, SimpleTokenizer, Trainer
     )
+    # Try to import the hybrid accelerator
+    try:
+        from hybrid_accelerator import HybridAccelerator, HybridTensor
+        ACCELERATOR_AVAILABLE = True
+    except ImportError:
+        ACCELERATOR_AVAILABLE = False
+        print("⚠️ Hybrid accelerator not found, using pure Python")
 
 class UltimateAIFramework:
     """
@@ -45,6 +59,18 @@ class UltimateAIFramework:
         self.name = "Neurolea"
         self.version = "1.0.0"
         self.author = "Zero Dependencies Team"
+        
+        # Initialize accelerator if available
+        self.accelerator = None
+        if ACCELERATOR_AVAILABLE:
+            try:
+                self.accelerator = HybridAccelerator()
+                if self.accelerator.cpp_available:
+                    print("🚀 C++ acceleration enabled!")
+                else:
+                    print("📊 NumPy acceleration enabled (C++ compilation failed)")
+            except Exception as e:
+                print(f"⚠️ Could not initialize accelerator: {e}")
         
         # Components
         self.tokenizer = None
@@ -86,6 +112,13 @@ class UltimateAIFramework:
             "Text Generation",
             "Model Training Pipeline"
         ]
+        
+        # Add acceleration to capabilities if available
+        if self.accelerator:
+            if self.accelerator.cpp_available:
+                self.capabilities.append("C++ Accelerated Operations")
+            else:
+                self.capabilities.append("NumPy Accelerated Operations")
         
         # Calculate total parameters (estimated)
         self.total_parameters = self._estimate_parameters()
@@ -157,11 +190,14 @@ class UltimateAIFramework:
                 'tokenizer': True,
                 'model': True,
                 'optimizer': True,
-                'trainer': True
+                'trainer': True,
+                'accelerator': self.accelerator is not None
             },
             'parameters': self.total_parameters,
             'vocab_size': len(self.tokenizer.vocab),
-            'capabilities': len(self.capabilities)
+            'capabilities': len(self.capabilities),
+            'acceleration': 'C++' if (self.accelerator and self.accelerator.cpp_available) else 
+                           'NumPy' if self.accelerator else 'None'
         }
     
     def _count_model_parameters(self) -> int:
@@ -189,6 +225,8 @@ class UltimateAIFramework:
             raise RuntimeError("Framework not initialized. Call initialize_all_components first.")
         
         print(f"🚀 Starting training for {epochs} epochs...")
+        if self.accelerator:
+            print(f"   Using {'C++' if self.accelerator.cpp_available else 'NumPy'} acceleration")
         
         # Prepare training data
         train_data = []
@@ -265,6 +303,42 @@ class UltimateAIFramework:
         
         print(f"💾 Model saved to {path}")
     
+    def benchmark_acceleration(self):
+        """Benchmark the acceleration if available"""
+        if not self.accelerator:
+            print("No accelerator available for benchmarking")
+            return
+        
+        import numpy as np
+        import time
+        
+        print("\n🔬 Benchmarking Acceleration")
+        print("=" * 40)
+        
+        sizes = [100, 500, 1000]
+        for size in sizes:
+            a = np.random.randn(size, size).astype(np.float32)
+            b = np.random.randn(size, size).astype(np.float32)
+            
+            # Time numpy
+            start = time.time()
+            c_numpy = np.dot(a, b)
+            numpy_time = time.time() - start
+            
+            # Time accelerator
+            start = time.time()
+            c_accel = self.accelerator.matmul(a, b)
+            accel_time = time.time() - start
+            
+            speedup = numpy_time / accel_time if accel_time > 0 else 1.0
+            accel_type = "C++" if self.accelerator.cpp_available else "NumPy"
+            
+            print(f"Matrix size {size}x{size}:")
+            print(f"  NumPy: {numpy_time:.4f}s")
+            print(f"  {accel_type}: {accel_time:.4f}s")
+            print(f"  Speedup: {speedup:.2f}x")
+        print("=" * 40)
+    
     def demo(self):
         """Run a simple demonstration"""
         print("\n" + "="*60)
@@ -281,7 +355,12 @@ class UltimateAIFramework:
         ]
         
         print("\n📚 Initializing with demo data...")
-        self.initialize_all_components(demo_texts)
+        init_status = self.initialize_all_components(demo_texts)
+        
+        # Show acceleration status
+        if init_status['acceleration'] != 'None':
+            print(f"\n⚡ Acceleration enabled: {init_status['acceleration']}")
+            self.benchmark_acceleration()
         
         print("\n🏋️ Training model (this will take a moment)...")
         history = self.train(epochs=2, batch_size=2)
